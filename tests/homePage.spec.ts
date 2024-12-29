@@ -1,13 +1,10 @@
 import {test, expect} from '../fixtures/basePages'
 
-
+test.beforeEach(async ({page}) => {
+  await page.goto("http://selenium-python-resolver.s3-website.us-east-2.amazonaws.com/");
+});
 
 test.describe('Home Page Test Suite', () => {
-
-  test.beforeEach(async ({page}) => {
-    await page.goto("http://selenium-python-resolver.s3-website.us-east-2.amazonaws.com/");
-  });
-
   test('Test 1: Verify Login Form Presence and Input Functionality', async ({homePage}) => {
     // Assert that the email input field, password input field and sign in button are visible on the page
     await homePage.assertLoginElementsPresent();
