@@ -1,11 +1,14 @@
-version: '3.9' # Version of Docker Compose
+version: '3.9'
 
 services:
   playwright:
-    image: mcr.microsoft.com/playwright:v1.49.1-noble # Use the official Playwright Docker image
+    image: mcr.microsoft.com/playwright:v1.49.1-noble
     container_name: playwright
     working_dir: /app
     volumes:
-      - .:/app # Mount the current directory into the container
-      - ./test-results:/app/test-results # Mount test-results to persist results
-    command: ["npx", "playwright", "test"] # Default command to run Playwright tests
+      - .:/app # Mount the current project
+      - ./test-results:/app/test-results # Persist test results
+    command: >
+      sh -c "npm ci &&
+             npx playwright install &&
+             npx playwright test"
