@@ -22,7 +22,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Set up Docker Compose
+    # Install Docker Compose
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    # Run Playwright tests using Docker Compose
     - name: Run Playwright tests using Docker Compose
       run: docker-compose up --build --abort-on-container-exit
 
