@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playwright-tests
+  labels:
+    app: playwright-tests
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: playwright-tests
+  template:
+    metadata:
+      labels:
+        app: playwright-tests
+    spec:
+      containers:
+      - name: playwright-tests
+        image: 254506470920.dkr.ecr.us-east-2.amazonaws.com/playwright-tests:latest
+        imagePullPolicy: Always
+        command: ["npx", "playwright", "test"]
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

@@ -18,7 +18,8 @@ test.describe('Home Page Test Suite', () => {
 
   test('Test 2: Verify List Group Values in Test 2 Div', async ({homePage}) => {
     // In the test 2 div, assert that there are three values in the listgroup
-    await homePage.assertNumberOfListItemsCount (3);
+    // This will fail the test, it is just for testing. The item count should be 3
+    await homePage.assertNumberOfListItemsCount (1);
 
     // Assert that the second list item's value is set to "List Item 2"
     await homePage.assertListItemText (1, "List Item 2");

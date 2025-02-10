@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: playwright-tests-scheduler
+spec:
+  schedule: "0 4 * * *"  # Schedule: Every day at 4 AM
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: playwright-tests
+        spec:
+          containers:
+            - name: playwright
+              image: 254506470920.dkr.ecr.us-east-2.amazonaws.com/playwright-tests:latest
+              imagePullPolicy: Always
+              env:
+                - name: AWS_REGION
+                  value: "us-east-2"
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+          restartPolicy: OnFailure

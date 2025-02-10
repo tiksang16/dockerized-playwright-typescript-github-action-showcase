@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: playwright-tests
+spec:
+  template:
+    metadata:
+      labels:
+        app: playwright-tests
+    spec:
+      containers:
+      - name: playwright
+        image: 254506470920.dkr.ecr.us-east-2.amazonaws.com/playwright-tests
+        imagePullPolicy: Always
+        command: ["npx", "playwright", "test"] # Command to trigger Playwright tests
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+      restartPolicy: Never

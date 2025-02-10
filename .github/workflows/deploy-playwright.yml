@@ -1,0 +1,41 @@
+name: Deploy Playwright to EKS
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the latest code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Log in to Amazon ECR
+    - name: Log in to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Step 3: Build and push the Docker image to Amazon ECR
+    - name: Build and push Docker image
+      run: |
+        IMAGE_NAME=playwright-tests
+        IMAGE_TAG=$(date +%s)
+
+        docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG .
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG
+
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+    # Step 4: Update CronJob on EKS
+    - name: Update EKS CronJob
+      env:
+        IMAGE_TAG: ${{ env.IMAGE_TAG }}
+      run: |
+        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
+        kubectl set image cronjob/playwright-tests-scheduler \
+          playwright=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/playwright-tests:$IMAGE_TAG
