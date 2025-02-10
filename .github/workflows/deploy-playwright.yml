@@ -3,11 +3,15 @@ name: Deploy Playwright to EKS
 on:
   push:
     branches:
-      - main 
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Enable OIDC token generation
+      contents: read   # Required to clone the repo
 
     steps:
     # Step 1: Check out the latest code
@@ -19,7 +23,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::254506470920:role/eksctl-playwright-cluster-cluster-ServiceRole-IV32eCoahuZR
-        aws-region: us-east-2  
+        aws-region: us-east-2
 
     # Step 3: Log in to Amazon ECR
     - name: Log in to Amazon ECR
@@ -31,8 +35,8 @@ jobs:
     # Step 4: Build and push the Docker image to Amazon ECR
     - name: Build and push Docker image
       env:
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  
-        AWS_REGION: us-east-2  
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        AWS_REGION: us-east-2
       run: |
         IMAGE_NAME=playwright-tests
         IMAGE_TAG=$(date +%s)
@@ -45,9 +49,9 @@ jobs:
     # Step 5: Update CronJob on EKS
     - name: Update EKS CronJob
       env:
-        AWS_REGION: us-east-2  
-        EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}  # Replace with your EKS cluster name secret
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  # Replace with your AWS Account ID secret
+        AWS_REGION: us-east-2
+        EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         IMAGE_TAG: ${{ env.IMAGE_TAG }}
       run: |
         aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
