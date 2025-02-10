@@ -3,7 +3,7 @@ name: Deploy Playwright to EKS
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main 
 
 jobs:
   build-and-deploy:
@@ -14,13 +14,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2: Log in to Amazon ECR
+    # Step 2: Configure AWS credentials
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::254506470920:role/eksctl-playwright-cluster-cluster-ServiceRole-IV32eCoahuZR
+        aws-region: us-east-2  
+
+    # Step 3: Log in to Amazon ECR
     - name: Log in to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registry-type: private
 
-    # Step 3: Build and push the Docker image to Amazon ECR
+    # Step 4: Build and push the Docker image to Amazon ECR
     - name: Build and push Docker image
+      env:
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  
+        AWS_REGION: us-east-2  
       run: |
         IMAGE_NAME=playwright-tests
         IMAGE_TAG=$(date +%s)
@@ -30,9 +42,12 @@ jobs:
 
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
-    # Step 4: Update CronJob on EKS
+    # Step 5: Update CronJob on EKS
     - name: Update EKS CronJob
       env:
+        AWS_REGION: us-east-2  
+        EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}  # Replace with your EKS cluster name secret
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}  # Replace with your AWS Account ID secret
         IMAGE_TAG: ${{ env.IMAGE_TAG }}
       run: |
         aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
