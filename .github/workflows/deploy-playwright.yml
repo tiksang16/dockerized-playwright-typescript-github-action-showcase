@@ -9,10 +9,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write  # Enable OIDC token generation
-      contents: read   # Required to clone the repo
-
     steps:
     # Step 1: Check out the latest code
     - name: Checkout code
@@ -20,10 +16,13 @@ jobs:
 
     # Step 2: Configure AWS credentials
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::254506470920:role/eksctl-playwright-cluster-cluster-ServiceRole-IV32eCoahuZR
-        aws-region: us-east-2
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+        aws configure set region us-east-2
 
     # Step 3: Log in to Amazon ECR
     - name: Log in to Amazon ECR
