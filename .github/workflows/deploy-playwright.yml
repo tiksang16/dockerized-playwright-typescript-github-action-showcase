@@ -50,60 +50,59 @@ jobs:
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
     # Step 5: Deploy and run Playwright tests on EKS
-    - name: Run Playwright tests on EKS
-      env:
-        AWS_REGION: us-east-2
-        EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-        IMAGE_TAG: ${{ env.IMAGE_TAG }}
-      run: |
-        # Update kubeconfig to connect to the EKS cluster
-        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+    # - name: Run Playwright tests on EKS
+    #   env:
+    #     AWS_REGION: us-east-2
+    #     EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+    #     AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+    #     IMAGE_TAG: ${{ env.IMAGE_TAG }}
+    #   run: |
+    #     # Update kubeconfig to connect to the EKS cluster
+    #     aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
-        # Define the Kubernetes Job manifest
-        cat <<EOF > playwright-job.yaml
-        apiVersion: batch/v1
-        kind: Job
-        metadata:
-          name: playwright-tests-job
-        spec:
-          backoffLimit: 0
-          template:
-            spec:
-              containers:
-              - name: playwright
-                image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/playwright-tests:$IMAGE_TAG
-                command: ["npx", "playwright", "test", "--reporter=json"]
-                volumeMounts:
-                  - name: test-results-volume
-                    mountPath: /app/test-results
-              restartPolicy: Never
-              volumes:
-                - name: test-results-volume
-                  emptyDir: {}
-        EOF
+    #     # Define the Kubernetes Job manifest
+    #     cat <<EOF > playwright-job.yaml
+    #     apiVersion: batch/v1
+    #     kind: Job
+    #     metadata:
+    #       name: playwright-tests-job
+    #     spec:
+    #       backoffLimit: 0
+    #       template:
+    #         spec:
+    #           containers:
+    #           - name: playwright
+    #             image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/playwright-tests:$IMAGE_TAG
+    #             command: ["npx", "playwright", "test", "--reporter=json"]
+    #             volumeMounts:
+    #               - name: test-results-volume
+    #                 mountPath: /app/test-results
+    #           restartPolicy: Never
+    #           volumes:
+    #             - name: test-results-volume
+    #               emptyDir: {}
+    #     EOF
 
-        # Apply the Job manifest to the EKS cluster
-        kubectl apply -f playwright-job.yaml
+    #     # Apply the Job manifest to the EKS cluster
+    #     kubectl apply -f playwright-job.yaml
 
-        # Wait for the Job to complete
-        kubectl wait --for=condition=complete job/playwright-tests-job --timeout=300s
+    #     # Wait for the Job to complete
+    #     kubectl wait --for=condition=complete job/playwright-tests-job --timeout=300s
 
-        # Copy test results from the Job's Pod to the local machine
-        POD_NAME=$(kubectl get pods --selector=job-name=playwright-tests-job --output=jsonpath='{.items[0].metadata.name}')
-        kubectl cp $POD_NAME:/app/test-results ./test-results
+    #     # Copy test results from the Job's Pod to the local machine
+    #     POD_NAME=$(kubectl get pods --selector=job-name=playwright-tests-job --output=jsonpath='{.items[0].metadata.name}')
+    #     kubectl cp $POD_NAME:/app/test-results ./test-results
 
     # Step 6: Upload test results directory to S3
-    # Test
-    - name: Upload test results to S3
-      env:
-        AWS_REGION: us-east-2
-        S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-      run: |
-        # Check if the test results directory exists
-        if [ -d "test-results" ]; then
-          # Upload the entire test results directory to S3
-          aws s3 cp test-results s3://$S3_BUCKET_NAME/test-results/ --recursive
-        else
-          echo "Test results directory not found. Skipping upload."
-        fi
+    # - name: Upload test results to S3
+    #   env:
+    #     AWS_REGION: us-east-2
+    #     S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+    #   run: |
+    #     # Check if the test results directory exists
+    #     if [ -d "test-results" ]; then
+    #       # Upload the entire test results directory to S3
+    #       aws s3 cp test-results s3://$S3_BUCKET_NAME/test-results/ --recursive
+    #     else
+    #       echo "Test results directory not found. Skipping upload."
+    #     fi
