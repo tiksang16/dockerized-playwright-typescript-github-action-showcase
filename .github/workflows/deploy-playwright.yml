@@ -94,6 +94,7 @@ jobs:
         kubectl cp $POD_NAME:/app/test-results ./test-results
 
     # Step 6: Upload test results directory to S3
+    # Test
     - name: Upload test results to S3
       env:
         AWS_REGION: us-east-2
